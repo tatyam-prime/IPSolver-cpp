@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+"""Generate standalone contest sources under build/submissions."""
+import pathlib
+import runpy
+
+root = pathlib.Path(__file__).resolve().parent.parent
+runpy.run_path(str(root / "tools/compact.py"))
+header = (root / "single_include/ip_solver.hpp").read_text().replace("#pragma once\n", "", 1)
+for source in sorted((root / "examples").glob("*/*.cpp")):
+    destination = root / "build/submissions" / source.relative_to(root / "examples")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(source.read_text().replace('#include "ip_solver.hpp"\n', header, 1))
+    print(f"{destination.relative_to(root)}: {destination.stat().st_size} bytes")

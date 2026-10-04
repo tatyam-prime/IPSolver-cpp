@@ -1,0 +1,20 @@
+/build/
+*.o
+.DS_Store
+__pycache__/
+*.py[cod]
+/compile_flags.txt
+
+# Generated compact header and standalone submissions.
+/single_include/
+
+# Keep research and formulation notes local; share the READMEs.
+*.md
+!README.md
+
+# Generated benchmark measurements stay out of the public repository.
+/benchmarks/README.md
+/benchmarks/**/*.csv
+/benchmarks/**/*.json
+/benchmarks/**/*.txt
+/benchmarks/**/*.log
