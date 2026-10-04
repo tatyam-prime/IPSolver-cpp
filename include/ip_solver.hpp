@@ -9,7 +9,8 @@
 #include <utility>
 #include <vector>
 
-// Optimize c*x, subject to linear constraints and variable bounds. C++17.
+// https://github.com/tatyam-prime/IPSolver-cpp/blob/main/include/ip_solver.hpp
+// Optimize c*x, subject to linear constraints and variable bounds.
 namespace ip {
 using Vec = std::vector<double>;
 inline constexpr double INF = std::numeric_limits<double>::infinity();
