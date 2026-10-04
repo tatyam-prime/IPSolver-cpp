@@ -18,14 +18,14 @@ int main(int argc,char** argv) {
             s.add_eq(row,a[i][j]);
         }
         ip::Options o; o.cuts=0; o.time_limit=2; o.eps=eps;
-        auto result=s.solve(o);
+        auto result=s.maximize(o);
         bool wrong=result.status==ip::Status::Infeasible || (result.status==ip::Status::Optimal && abs(result.objective-expected)>1e-5);
         cout<<(continuous?"LP":"IP")<<",eps="<<eps<<','<<status(result.status)<<",LPs="<<result.nodes<<",pivots="<<result.pivots<<",objective="<<result.objective<<",incorrect="<<wrong<<'\n';
         failures+=wrong;
 #ifndef IP_NO_INITIAL
         if (!continuous && eps==1e-9) {
             o.initial_solution.resize(n); for (int i=0;i<r;++i) for (int j=0;j<c;++j) o.initial_solution[i*c+j]=x[i][j];
-            auto hint=s.solve(o);
+            auto hint=s.maximize(o);
             cout<<"IP,known_hint,"<<status(hint.status)<<",LPs="<<hint.nodes<<",pivots="<<hint.pivots<<",objective="<<hint.objective<<'\n';
         }
 #endif

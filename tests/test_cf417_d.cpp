@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
         ip::Options options;
         options.cuts=argc>2 ? std::atoi(argv[2]) : 8;
         options.time_limit=1;
-        auto r=s.solve(options);
+        auto r=s.maximize(options);
         std::cout<<"cuts="<<options.cuts<<" status="<<int(r.status)
                  <<" objective="<<r.objective<<" nodes="<<r.nodes<<" pivots="<<r.pivots<<'\n';
         return 0;

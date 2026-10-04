@@ -106,7 +106,7 @@ NegativeTourAnswer negative_tour(int n,const std::vector<DirectedEdge>& edges,
         auto o=options; o.node_limit-=nodes; o.pivot_limit-=pivots;
         if (std::isfinite(o.time_limit)) o.time_limit=std::max(0.0,o.time_limit-
             std::chrono::duration<double>(std::chrono::steady_clock::now()-started).count());
-        auto r=solver.solve(o);
+        auto r=solver.maximize(o);
         ++answer.solves; nodes+=r.nodes; pivots+=r.pivots;
         r.nodes=nodes; r.pivots=pivots; r.objective-=offset; r.bound-=offset;
         if (r.status!=ip::Status::Optimal) { answer.result=std::move(r); return answer; }

@@ -65,7 +65,7 @@ HarmonyAnswer harmony_chest(const std::vector<int>& a,ip::Options options={},boo
             if (gain>best_gain) best_gain=gain,options.initial_solution=std::move(x);
         }
     }
-    auto r=s.solve(options);
+    auto r=s.maximize(options);
     std::vector<int> b(a.size(),1),next(positions.size());
     if (r.has_solution()) for (int j=0;j<vars;++j) if (r.x[j]>0.5) {
         auto c=choices[j];

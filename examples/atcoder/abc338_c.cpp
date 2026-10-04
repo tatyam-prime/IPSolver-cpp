@@ -20,7 +20,7 @@ int main() {
     }
     s.bounds(0, 0, ua);
     s.bounds(1, 0, ub);
-    auto r=s.solve();
+    auto r=s.maximize();
     if (r.status != ip::Status::Optimal) return 1;
     std::cout << std::llround(r.objective) << '\n';
 }

@@ -11,7 +11,7 @@ CircusAnswer circus(const string& c,const string& a,ip::Options o={}) {
     ip::Solver s(ip::Vec(3));
     for (int k=0;k<3;++k) s.bounds(k,0,groups[k].size());
     s.add_eq({1,1,1},n/2); s.add_eq({0,1,2},total);
-    auto r=s.solve(o); vector<int> first;
+    auto r=s.maximize(o); vector<int> first;
     if (r.has_solution()) for (int k=0;k<3;++k)
         for (int j=0;j<int(llround(r.x[k]));++j) first.push_back(groups[k][j]);
     return {std::move(first),std::move(r)};

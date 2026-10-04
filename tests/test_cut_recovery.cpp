@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
             s.add_ge(row, 1);
         }
         auto check = [&](ip::Options o, ip::Status status) {
-            auto r = s.solve(o);
+            auto r = s.maximize(o);
             require(r.status == status, "unexpected recovery status");
             require(r.nodes <= o.node_limit && r.pivots <= o.pivot_limit,
                     "recovery reset a global budget");

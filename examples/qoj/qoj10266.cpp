@@ -45,7 +45,7 @@ PackingAnswer pack12(const vector<int>& items, ip::Options o={}, bool hint=true)
 #else
     (void)hint;
 #endif
-    auto r=s.solve(o);
+    auto r=s.maximize(o);
     int answer=r.has_solution()?0:-1; for (double x:r.x) answer+=int(llround(x));
     return {answer,n,14,std::move(r)};
 }

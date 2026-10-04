@@ -89,7 +89,7 @@ GraphProfitAnswer graph_profit(vector<ll> cost,const vector<ProfitEdge>& edges,
         local.time_limit=max(0.0,options.time_limit-chrono::duration<double>(chrono::steady_clock::now()-began).count());
         local.initial_solution.clear();
         if (hint) local.initial_solution.assign(k,all>0?1:0);
-        auto result=solver.solve(local);
+        auto result=solver.maximize(local);
         answer.variables+=k; answer.rows+=2*ne+nv; ++answer.components;
         answer.result.nodes+=result.nodes; answer.result.pivots+=result.pivots;
         if (result.status!=ip::Status::Optimal) {

@@ -5,7 +5,7 @@ CircusAnswer circus_raw(const string& c,const string& a,ip::Options o) {
     int n=int(c.size()),total=0; ip::Solver s(ip::Vec(n,0)); ip::Vec value(n);
     for (int i=0;i<n;++i) { s.bounds(i,0,1); value[i]=c[i]+a[i]-2*'0'; total+=a[i]-'0'; }
     s.add_eq(ip::Vec(n,1),n/2); s.add_eq(value,total);
-    auto r=s.solve(o); vector<int> first;
+    auto r=s.maximize(o); vector<int> first;
     if (r.has_solution()) for (int i=0;i<n;++i) if (r.x[i]>.5) first.push_back(i);
     return {std::move(first),std::move(r)};
 }

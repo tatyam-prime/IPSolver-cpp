@@ -20,7 +20,7 @@ int main(int argc,char** argv) {
     }
     auto model=std::chrono::steady_clock::now();
     ip::Options options; options.cuts=0; options.time_limit=limit;
-    auto result=solver.solve(options);
+    auto result=solver.maximize(options);
     auto finish=std::chrono::steady_clock::now();
     std::cout<<"h,w,variables,rows,status,objective,bound,lp_solves,pivots,model_ms,total_ms\n"
              <<h<<','<<w<<','<<m<<','<<n<<','<<int(result.status)<<','<<result.objective<<','

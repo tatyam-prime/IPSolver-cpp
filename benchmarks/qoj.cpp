@@ -35,7 +35,7 @@ MineAnswer mine_direct(const Grid& a,ip::Options o) {
             for (int v=max(0,j-1);v<=min(c-1,j+1);++v) row[u*c+v]=1;
         s.add_eq(row,a[i][j]);
     }
-    auto result=s.solve(o);
+    auto result=s.maximize(o);
     return {result.has_solution()?int(llround(result.objective)):-1,n,2*n,{},std::move(result)};
 }
 #ifndef IP_BENCH_ONLY

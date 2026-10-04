@@ -40,7 +40,7 @@ ip::Result select_strings(const std::vector<std::string>& input,
     // Select i iff p_i-q_i=1. Difference constraints give an integral LP.
     ip::Options options;
     options.cuts=0;
-    return solver.solve(options);
+    return solver.maximize(options);
 }
 
 #ifndef IP_EXAMPLE_TEST

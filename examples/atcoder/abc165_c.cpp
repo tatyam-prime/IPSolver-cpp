@@ -114,7 +114,7 @@ RequirementsAnswer many_requirements(int n,int m,const std::vector<Requirement>&
         for (int i=0;i<int(q.size());++i)
             options.initial_solution[gaps+i]=best[q[i].b]-best[q[i].a]==q[i].c;
     }
-    auto r=s.solve(options);
+    auto r=s.maximize(options);
     long long score=r.has_solution()?std::llround(r.objective):-1;
     return {score,vars,rows,std::move(r)};
 }

@@ -257,7 +257,7 @@ ip::Result cold_solve(const Model &m, ip::Options options) {
         lp_options.time_limit -= elapsed;
         lp_options.node_limit = 1;
         lp_options.pivot_limit -= result.pivots;
-        auto lp = solver.solve(lp_options);
+        auto lp = solver.maximize(lp_options);
         ++result.nodes;
         result.pivots += lp.pivots;
         if (lp.status == ip::Status::Infeasible) continue;
@@ -358,7 +358,7 @@ int main(int argc, char **argv) {
         auto solver = make_solver(m, Vec(m.c.size()), m.upper);
         for (int method = 0; method < 1 + int(cold); ++method) {
             auto start = Clock::now();
-            auto r = method ? cold_solve(m, options) : solver.solve(options);
+            auto r = method ? cold_solve(m, options) : solver.maximize(options);
             double ms = std::chrono::duration<double, std::milli>(Clock::now() - start).count();
             bool verified = validate(m, r);
             success &= verified;

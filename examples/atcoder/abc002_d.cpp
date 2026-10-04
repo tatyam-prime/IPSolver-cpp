@@ -21,7 +21,7 @@ int main() {
         a[i] = a[j] = 1;
         s.add_le(a, 1); // nonadjacent vertices cannot both be selected
     }
-    auto r = s.solve();
+    auto r = s.maximize();
     if (r.status != ip::Status::Optimal) return 1;
     std::cout << std::llround(r.objective) << '\n';
 }

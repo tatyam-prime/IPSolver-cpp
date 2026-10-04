@@ -71,7 +71,7 @@ ll cunning_gena(int m, ll b, std::vector<Friend> a) {
             count.add_ge(row,1);
         }
         count.add_ge(ip::Vec(n,1),minimum);
-        auto r=count.solve(options);
+        auto r=count.maximize(options);
         if (r.status!=ip::Status::Optimal) throw std::runtime_error("count IP solve failed: "+std::to_string(int(r.status)));
         cardinality=int(std::llround(-r.objective));
     }
@@ -101,7 +101,7 @@ ll cunning_gena(int m, ll b, std::vector<Friend> a) {
         row[n+j]=1; row[n+j-1]=-1;
         s.add_le(row, 0); // Higher threshold includes all preceding increments.
     }
-    auto r=s.solve(options);
+    auto r=s.maximize(options);
     if (r.status!=ip::Status::Optimal) throw std::runtime_error("cost IP solve failed: "+std::to_string(int(r.status)));
     // Recompute from chosen friends, so no large integer passes through double.
     ll cost=0, monitors=0;

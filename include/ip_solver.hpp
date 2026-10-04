@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-// Maximize c*x, subject to linear constraints and variable bounds. C++17.
+// Optimize c*x, subject to linear constraints and variable bounds. C++17.
 namespace ip {
 using Vec = std::vector<double>;
 inline constexpr double INF = std::numeric_limits<double>::infinity();
@@ -239,7 +239,16 @@ public:
         lo[i]=lower; hi[i]=upper;
     }
     void continuous(int i) { require(i>=0 && i<n); integer[i]=false; }
-    Result solve(const Options& o=Options()) const {
+    Result maximize(const Options& o=Options()) const { return run(c,o); }
+    Result minimize(const Options& o=Options()) const {
+        Vec objective=c;
+        for (double& v:objective) v=-v;
+        Result r=run(objective,o);
+        r.objective=0-r.objective; r.bound=0-r.bound;
+        return r;
+    }
+private:
+    Result run(const Vec& c, const Options& o) const {
         require(o.eps>0 && std::isfinite(o.eps) && o.integer_eps>=o.eps &&
             std::isfinite(o.integer_eps) && o.integer_eps<0.5 && o.time_limit>=0 && o.strong_branching>=0 && o.cuts>=0);
         Result ans;

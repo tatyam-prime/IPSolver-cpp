@@ -53,10 +53,10 @@ void mine_layer(bool continuous, double eps, bool reverse = false, int shift = 0
                     "Mine Layer original equality residual");
         require(r.nodes <= o.node_limit && r.pivots <= o.pivot_limit, "Mine Layer budget");
     };
-    check(s.solve(o));
+    check(s.maximize(o));
     if (!continuous && eps == 1e-9 && !reverse) {
         o.initial_solution = witness;
-        check(s.solve(o));
+        check(s.maximize(o));
     }
 }
 

@@ -53,7 +53,7 @@ MineAnswer mine_layer(const vector<vector<int>>& clue, ip::Options o={}) {
     }
     // The remaining constraints are a signed bipartite incidence matrix (TU).
     o.cuts=0;
-    auto result=s.solve(o);
+    auto result=s.maximize(o);
     if (result.status!=ip::Status::Optimal) return {-1,n,rows,{},std::move(result)};
     for (int i=0;i<r;++i) for (int j=0;j<c;++j)
         for (auto [k,a]:terms(i,j)) q[i][j]+=a*int(llround(result.x[k]));

@@ -13,7 +13,7 @@ int main() {
     for (int i=0; i<n; ++i) s.bounds(i, 0, 1);
     ip::Options o;
     o.time_limit=1;
-    auto r=s.solve(o);
+    auto r=s.maximize(o);
     if (r.has_solution()) std::cout << r.objective << '\n';
     if (r.status!=ip::Status::Optimal)
         std::cerr << "Stopped before proving optimality; upper bound = " << r.bound << '\n';

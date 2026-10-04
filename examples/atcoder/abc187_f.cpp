@@ -48,7 +48,7 @@ CliqueCoverAnswer clique_cover(int n, const std::vector<std::pair<int,int>>& edg
     // Bounds all pattern counts with one row, rather than k upper-bound rows.
     solver.add_le(ip::Vec(k,1),upper);
     if (hint) options.initial_solution=std::move(initial);
-    auto result=solver.solve(options);
+    auto result=solver.maximize(options);
     int groups=-1;
     if (result.has_solution()) {
         groups=0;

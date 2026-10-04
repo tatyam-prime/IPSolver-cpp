@@ -71,7 +71,7 @@ CoverAnswer vertex_cover(int n, const vector<pair<int,int>>& edges, ip::Options 
 #else
         (void)hint;
 #endif
-        auto r=s.solve(local);
+        auto r=s.maximize(local);
         ans.variables+=k; ans.rows+=rows; ans.result.nodes+=r.nodes; ans.result.pivots+=r.pivots;
         if (r.status!=ip::Status::Optimal) { ans.cover=-1; ans.result.status=r.status; return ans; }
         int independent=0; for (int i=0;i<k;++i) independent+=weight[i]*int(llround(r.x[i]));

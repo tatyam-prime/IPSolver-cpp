@@ -46,7 +46,7 @@ int main() {
     }
     for (int i=0; i<m; ++i) for (int j=0; j<n; ++j)
         if (l[i][j]>1) implies(i, id[j][l[i][j]]);
-    auto r=s.solve(); // This closure polytope has integral LP vertices.
+    auto r=s.maximize(); // This closure polytope has integral LP vertices.
     if (r.status!=ip::Status::Optimal) return 1;
     std::cout << std::llround(r.objective) << '\n';
 }

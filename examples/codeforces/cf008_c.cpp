@@ -31,7 +31,7 @@ int main() {
 #ifdef IPSOLVER_STATS
     auto started = std::chrono::steady_clock::now();
 #endif
-    auto result = solver.solve();
+    auto result = solver.maximize();
     if (result.status != ip::Status::Optimal) return 1;
     std::vector<int> route{0};
     for (int e=0; e<int(edge.size()); ++e) if (result.x[e]>0.5) {

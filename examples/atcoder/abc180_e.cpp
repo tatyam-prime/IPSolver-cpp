@@ -72,7 +72,7 @@ AerialAnswer aerial_cities(const std::vector<City>& p, ip::Options options={}) {
         o.node_limit-=nodes; o.pivot_limit-=pivots;
         if (std::isfinite(o.time_limit)) o.time_limit=std::max(0.0,o.time_limit-
             std::chrono::duration<double>(std::chrono::steady_clock::now()-started).count());
-        auto r=solver.solve(o);
+        auto r=solver.maximize(o);
         ++answer.solves; nodes+=r.nodes; pivots+=r.pivots;
         r.nodes=nodes; r.pivots=pivots;
         if (r.status!=ip::Status::Optimal) { answer.result=std::move(r); return answer; }
