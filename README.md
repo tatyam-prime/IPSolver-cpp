@@ -10,12 +10,12 @@
 #include <iostream>
 
 int main() {
-    ip::Solver s({3, 2});    // maximize 3*x + 2*y, x,y >= 0, integer
-    s.add_le({2, 1}, 4);    // 2*x + y <= 4
-    s.add_le({1, 2}, 4);    // x + 2*y <= 4
-    auto r = s.maximize();
-    if (r.status == ip::Status::Optimal)
-        std::cout << r.objective << '\n'; // 6; r.x = {2, 0}
+	ip::Solver s({3, 2});    // maximize 3*x + 2*y, x,y >= 0, integer
+	s.add_le({2, 1}, 4);    // 2*x + y <= 4
+	s.add_le({1, 2}, 4);    // x + 2*y <= 4
+	auto r = s.maximize();
+	if (r.status == ip::Status::Optimal)
+		std::cout << r.objective << '\n'; // 6; r.x = {2, 0}
 }
 ```
 

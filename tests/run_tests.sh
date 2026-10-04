@@ -8,9 +8,9 @@ trap 'rm -rf "$build_dir"' EXIT
 cxx="${CXX:-c++}"
 flags=(-std=c++17 -Wall -Wextra -Wpedantic -I "$root_dir/include")
 if [[ "${SANITIZE:-0}" == 1 ]]; then
-  flags+=(-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer)
+	flags+=(-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer)
 else
-  flags+=(-O2)
+	flags+=(-O2)
 fi
 
 "$cxx" "${flags[@]}" "$root_dir/tests/test_ip.cpp" -o "$build_dir/test_ip"

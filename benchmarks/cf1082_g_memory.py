@@ -14,9 +14,9 @@ parser.add_argument("input", type=Path)
 args = parser.parse_args()
 start = time.perf_counter()
 result = subprocess.run([str(args.binary.resolve())], input=args.input.read_text(),
-                        text=True, capture_output=True, check=True)
+						text=True, capture_output=True, check=True)
 elapsed = 1000 * (time.perf_counter() - start)
 rss = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss
 print(json.dumps({"input": str(args.input), "answer": int(result.stdout), "ms": elapsed,
-                  "max_rss": rss, "rss_unit": "bytes" if sys.platform == "darwin" else "native"},
-                 indent=2))
+				  "max_rss": rss, "rss_unit": "bytes" if sys.platform == "darwin" else "native"},
+				 indent=2))
