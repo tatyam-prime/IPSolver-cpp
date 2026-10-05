@@ -21,7 +21,7 @@ int main() {
 
 ## 使い方
 
-`include/ip_solver.hpp`，あるいは短縮版 `include/ip_solver.min.hpp` をコピペしてください．
+[`include/ip_solver.hpp`](include/ip_solver.hpp)，あるいは短縮版 [`include/ip_solver.min.hpp`](include/ip_solver.min.hpp) をコピペしてください．
 
 ```sh
 c++ -std=c++17 -O2 -Iinclude examples/basic.cpp -o /tmp/ip_example
