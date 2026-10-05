@@ -1,7 +1,6 @@
-#define IP_EXAMPLE_TEST
-#include "../examples/qoj/qoj10266.cpp"
-#include "../examples/qoj/qoj3699.cpp"
-#include "../examples/qoj/qoj5785.cpp"
+#include "models/qoj10266.hpp"
+#include "models/qoj3699.hpp"
+#include "models/qoj5785.hpp"
 #include <chrono>
 #include <fstream>
 #include <random>

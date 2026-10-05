@@ -1,5 +1,4 @@
-#define IP_EXAMPLE_TEST
-#include "../examples/atcoder/abc338_f.cpp"
+#include "models/abc338_f.hpp"
 #include <cstdlib>
 #include <fstream>
 #include <random>

@@ -109,7 +109,7 @@ def main():
 		flags = [cxx, "-std=c++17", "-O2", "-Wall", "-Wextra", "-Wpedantic"]
 		submission, oracle = Path(temp) / "submission", Path(temp) / "oracle"
 		source = ROOT / ("build/submissions/codeforces" if args.standalone else "examples/codeforces") / "cf008_c.cpp"
-		subprocess.run(flags + ["-DIPSOLVER_STATS", "-I" + str(ROOT / "include"),
+		subprocess.run(flags + ["-I" + str(ROOT / "include"),
 								str(source), "-o", str(submission)], check=True)
 		subprocess.run(flags + [str(ROOT / "tests/test_cf008_c.cpp"),
 								"-o", str(oracle)], check=True)
@@ -118,7 +118,7 @@ def main():
 									   capture_output=True, check=True, timeout=120)
 		optimum = list(map(int, oracle_output.stdout.split()))
 		assert len(optimum) == len(cases)
-		worst_wall, worst_solver, max_nodes, max_pivots = 0, (0, 0, 0, ""), 0, 0
+		worst_wall = 0
 		for (kind, data, known), expected in zip(cases, optimum):
 			if known is not None:
 				assert known == expected
@@ -128,17 +128,9 @@ def main():
 			elapsed = time.perf_counter() - before
 			assert run.returncode == 0, (run.returncode, run.stdout, run.stderr, data)
 			validate(data, run.stdout, expected)
-			stats = run.stderr.split()
-			nodes, pivots, solver_time = int(stats[0]), int(stats[1]), float(stats[2])
 			worst_wall = max(worst_wall, elapsed)
-			max_nodes, max_pivots = max(max_nodes, nodes), max(max_pivots, pivots)
-			if solver_time > worst_solver[0]:
-				worst_solver = (solver_time, nodes, pivots, kind)
 		print(f"CF8C: {len(cases)} cases passed (including {args.max_cases} maximum-size); "
-			  f"worst process wall time {worst_wall:.4f}s; "
-			  f"worst solver/output time {worst_solver[0]:.4f}s, "
-			  f"{worst_solver[1]} nodes, {worst_solver[2]} pivots ({worst_solver[3]}); "
-			  f"max nodes/pivots {max_nodes}/{max_pivots}")
+			  f"worst process wall time {worst_wall:.4f}s")
 
 
 if __name__ == "__main__":

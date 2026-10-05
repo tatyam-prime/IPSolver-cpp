@@ -1,5 +1,4 @@
-#define IP_EXAMPLE_TEST
-#include "../examples/codeforces/cf1082_g.cpp"
+#include "../tests/models/cf1082_g.hpp"
 #include "../tests/test_cf1082_g_oracles.hpp"
 #include <fstream>
 #include <iomanip>

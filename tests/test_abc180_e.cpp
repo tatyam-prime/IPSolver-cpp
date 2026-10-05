@@ -1,5 +1,4 @@
-#define IP_EXAMPLE_TEST
-#include "../examples/atcoder/abc180_e.cpp"
+#include "models/abc180_e.hpp"
 #include <cstdlib>
 #include <iomanip>
 #include <random>

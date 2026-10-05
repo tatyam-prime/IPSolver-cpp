@@ -1,9 +1,4 @@
-#define IP_EXAMPLE_TEST
-#ifdef IP_TEST_STANDALONE
-#include "../build/submissions/codeforces/cf1082_g.cpp"
-#else
-#include "../examples/codeforces/cf1082_g.cpp"
-#endif
+#include "models/cf1082_g.hpp"
 #include "test_cf1082_g_oracles.hpp"
 #include <chrono>
 #include <fstream>

@@ -1,9 +1,4 @@
-#define IP_EXAMPLE_TEST
-#ifdef IP_TEST_STANDALONE
-#include "../build/submissions/atcoder/abc354_g.cpp"
-#else
-#include "../examples/atcoder/abc354_g.cpp"
-#endif
+#include "models/abc354_g.hpp"
 #include <chrono>
 #include <cstdint>
 #include <random>

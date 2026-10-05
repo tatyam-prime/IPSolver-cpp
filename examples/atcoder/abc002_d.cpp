@@ -2,26 +2,31 @@
 #include "ip_solver.hpp"
 #include <iostream>
 
+using namespace std;
+
 int main() {
-	std::ios::sync_with_stdio(false);
-	std::cin.tie(nullptr);
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
 	int n, m;
-	std::cin >> n >> m;
-	std::vector<std::vector<int>> edge(n, std::vector<int>(n));
+	cin >> n >> m;
+	vector<vector<int>> edge(n, vector<int>(n));
 	while (m--) {
 		int u, v;
-		std::cin >> u >> v;
-		--u; --v;
+		cin >> u >> v;
+		--u;
+		--v;
 		edge[u][v] = edge[v][u] = 1;
 	}
 	ip::Solver s(ip::Vec(n, 1)); // maximize the number of selected vertices
-	for (int i=0; i<n; ++i) s.bounds(i, 0, 1);
-	for (int i=0; i<n; ++i) for (int j=i+1; j<n; ++j) if (!edge[i][j]) {
-		ip::Vec a(n);
-		a[i] = a[j] = 1;
-		s.add_le(a, 1); // nonadjacent vertices cannot both be selected
-	}
+	for (int i = 0; i < n; ++i)
+		s.bounds(i, 0, 1);
+	for (int i = 0; i < n; ++i)
+		for (int j = i + 1; j < n; ++j)
+			if (!edge[i][j]) {
+				ip::Vec a(n);
+				a[i] = a[j] = 1;
+				s.add_le(a, 1); // nonadjacent vertices cannot both be selected
+			}
 	auto r = s.maximize();
-	if (r.status != ip::Status::Optimal) return 1;
-	std::cout << std::llround(r.objective) << '\n';
+	cout << llround(r.objective) << '\n';
 }

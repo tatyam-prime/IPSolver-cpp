@@ -1,5 +1,4 @@
-#define IP_EXAMPLE_TEST
-#include "../examples/atcoder/abc187_f.cpp"
+#include "../tests/models/abc187_f.hpp"
 #include "../tests/test_abc187_f_oracles.hpp"
 #include <chrono>
 #include <fstream>

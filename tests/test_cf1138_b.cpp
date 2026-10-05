@@ -1,9 +1,4 @@
-#define IP_EXAMPLE_TEST
-#ifdef IP_TEST_STANDALONE
-#include "../build/submissions/codeforces/cf1138_b.cpp"
-#else
-#include "../examples/codeforces/cf1138_b.cpp"
-#endif
+#include "models/cf1138_b.hpp"
 #include <chrono>
 #include <random>
 #include <stdexcept>
