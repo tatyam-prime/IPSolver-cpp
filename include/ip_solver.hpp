@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <limits>
 #include <numeric>
+#include <optional>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -141,19 +142,22 @@ class Solver {
 			}
 			return primal(0,w);
 		}
-		// Add sign*x_k <= sign*t in the current basis, retaining dual feasibility.
-		void branch(int k, double t, int sign) {
-			path.push_back({sign>0 ? k : -k-1,t});
+		// Express a new constraint in the current basis, retaining dual feasibility.
+		void add(const Vec& a, double b) {
 			Vec row(n+2);
-			row[n+1]=sign*t;
-			for (int j=0; j<=n; ++j) if (N[j]==k) row[j]=sign;
-			for (int i=0; i<m; ++i) if (B[i]==k) {
-				for (int j=0; j<=n; ++j) row[j]=-sign*d[i][j];
-				row[n+1]-=sign*d[i][n+1];
+			row[n+1]=b;
+			for (int j=0; j<=n; ++j) if (N[j]>=0 && N[j]<n) row[j]=a[N[j]];
+			for (int i=0; i<m; ++i) if (B[i]>=0 && B[i]<n && a[B[i]]) {
+				for (int j=0; j<n+2; ++j) row[j]-=a[B[i]]*d[i][j];
 			}
 			d.insert(d.begin()+m, std::move(row));
 			B.push_back(next++);
 			++m;
+		}
+		void branch(int k, double t, int sign) {
+			path.push_back({sign>0 ? k : -k-1,t});
+			Vec row(n); row[k]=sign;
+			add(row,sign*t);
 		}
 		Status dual(Work& w) {
 			if (!w.node()) return Status::Limit;
@@ -220,6 +224,13 @@ class Solver {
 			return x;
 		}
 	};
+	struct Saved {
+		LP lp;
+		int rows;
+		double eps, integer_eps;
+		bool minimize;
+	};
+	mutable std::optional<Saved> saved;
 public:
 	explicit Solver(Vec objective) : n(int(objective.size())), c(std::move(objective)),
 		lo(n), hi(n,INF), integer(n,true) {
@@ -238,18 +249,19 @@ public:
 	void bounds(int i, double lower, double upper=INF) {
 		require(i>=0 && i<n && std::isfinite(lower) && (std::isfinite(upper) || upper==INF));
 		lo[i]=lower; hi[i]=upper;
+		saved.reset();
 	}
-	void continuous(int i) { require(i>=0 && i<n); integer[i]=false; }
+	void continuous(int i) { require(i>=0 && i<n); integer[i]=false; saved.reset(); }
 	Result maximize(const Options& o=Options()) const { return run(c,o); }
 	Result minimize(const Options& o=Options()) const {
 		Vec objective=c;
 		for (double& v:objective) v=-v;
-		Result r=run(objective,o);
+		Result r=run(objective,o,true);
 		r.objective=0-r.objective; r.bound=0-r.bound;
 		return r;
 	}
 private:
-	Result run(const Vec& c, const Options& o) const {
+	Result run(const Vec& c, const Options& o, bool minimize=false) const {
 		require(o.eps>0 && std::isfinite(o.eps) && o.integer_eps>=o.eps &&
 			std::isfinite(o.integer_eps) && o.integer_eps<0.5 && o.time_limit>=0 && o.strong_branching>=0 && o.cuts>=0);
 		Result ans;
@@ -342,8 +354,21 @@ private:
 				return Status::NumericalError;
 			return feasible(x) ? status : Status::NumericalError;
 		};
-		LP root(A,rhs,c);
-		ans.status=checked(root,root.root(w));
+		bool reuse=saved && saved->minimize==minimize && saved->eps==o.eps && saved->integer_eps==o.integer_eps;
+		LP root=reuse ? std::move(saved->lp) : LP(A,rhs,c);
+		if (reuse) for (int i=saved->rows; i<int(a.size()); ++i) root.add(A[i],rhs[i]);
+		saved.reset();
+		if (reuse) w.dual_limit=std::max<uint64_t>(1000,10*uint64_t(n+root.m));
+		ans.status=checked(root,reuse ? root.dual(w) : root.root(w));
+		if (reuse && (w.retry || ans.status==Status::NumericalError ||
+			(ans.status==Status::Infeasible && ans.has_solution()))) {
+			// Retry from the model without resetting the time, LP or pivot budgets.
+			w.retry=false;
+			root=LP(A,rhs,c);
+			ans.status=checked(root,root.root(w));
+			if (ans.status==Status::UnboundedRelaxation) ans.status=Status::NumericalError;
+		}
+		w.dual_limit=UINT64_MAX;
 		if (ans.status!=Status::Optimal) {
 			if (ans.status==Status::Infeasible && ans.has_solution()) ans.status=Status::NumericalError;
 			if (ans.status==Status::Infeasible) ans.bound=-INF;
@@ -356,6 +381,7 @@ private:
 		};
 		ans.bound=bound(root);
 		if (!std::isfinite(ans.bound)) { ans.status=Status::NumericalError; return ans; }
+		saved=Saved{std::move(root),int(a.size()),o.eps,o.integer_eps,minimize};
 		auto search=[&](LP root, int cuts) {
 			uint64_t first_node=ans.nodes-1;
 			ans.status=Status::Optimal;
@@ -443,14 +469,14 @@ private:
 			ans.status=ans.has_solution() ? Status::Optimal : Status::Infeasible;
 			ans.bound=ans.objective;
 		};
-		if (!o.cuts || objective_scale>=1e10) search(std::move(root),0);
+		if (!o.cuts || objective_scale>=1e10) search(saved->lp,0);
 		else {
-			search(root,o.cuts);
+			search(saved->lp,o.cuts);
 			// Discard all cuts and descendants, keeping the incumbent and total budgets.
 			if ((w.retry || ans.status==Status::NumericalError) && !w.timeout() &&
 				ans.nodes<o.node_limit && ans.pivots<o.pivot_limit) {
 				w.dual_limit=UINT64_MAX;
-				search(std::move(root),0);
+				search(saved->lp,0);
 			}
 		}
 		return ans;

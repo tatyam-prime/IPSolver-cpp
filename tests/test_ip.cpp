@@ -224,14 +224,22 @@ ip::Solver build(const Problem& p) {
 std::size_t checks = 0;
 
 void check(const Problem& p, const std::string& name,
-		   const ip::Options& options = ip::Options(), bool minimize = false) {
+		   const ip::Options& options = ip::Options(), bool minimize = false,
+		   const ip::Solver* reused = nullptr) {
 	int continuous = static_cast<int>(std::count(p.integer.begin(), p.integer.end(), false));
 	Problem target = p;
 	if (minimize) for (double& c : target.c) c = -c;
 	OracleResult expected = continuous <= 1 ? enumerate(target) : vertices(target);
 	if (minimize && expected.feasible) expected.objective = -expected.objective;
-	const auto solver = build(p);
+	const auto fresh = build(p);
+	const auto& solver = reused ? *reused : fresh;
 	ip::Result actual = minimize ? solver.minimize(options) : solver.maximize(options);
+	if (reused) {
+		auto cold = minimize ? fresh.minimize(options) : fresh.maximize(options);
+		require(actual.status == cold.status && (actual.objective == cold.objective ||
+				near(actual.objective, cold.objective)), name + ": warm/cold mismatch\n" + describe(p));
+		++checks;
+	}
 	std::ostringstream context;
 	context.precision(17);
 	context << "\nactual status=" << static_cast<int>(actual.status)
@@ -687,7 +695,8 @@ void minimization_tests() {
 		if (limit == 0) o.node_limit = 0;
 		if (limit == 1) o.pivot_limit = 0;
 		if (limit == 2) o.time_limit = 0;
-		auto r = s.minimize(o);
+		auto limited = model; // This assertion specifically covers a cold root.
+		auto r = limited.minimize(o);
 		require(r.status == ip::Status::Limit && r.pivots == 0 &&
 				r.has_solution() == hint && r.objective == (hint ? 0 : ip::INF) && r.bound == -ip::INF,
 				"minimize limit before a root bound, with and without a start");
@@ -819,6 +828,135 @@ void improvement_tests() {
 	check(p, "negative RHS nonnegative row");
 }
 
+void reoptimization_tests(int cases) {
+	ip::Options o; o.cuts = 0;
+	ip::Solver s({3, 2});
+	s.bounds(0, 0, 4); s.bounds(1, 0, 4);
+	require(s.maximize(o).objective == 20, "initial bounded solve");
+	s.add_le({1, 1}, 5);
+	require(s.maximize(o).objective == 14, "append a violated constraint");
+	s.add_eq({1, -1}, 1);
+	auto r = s.maximize(o);
+	require(r.objective == 13 && r.x == ip::Vec({3, 2}), "append equality in a nontrivial basis");
+	o.pivot_limit = 0;
+	r = s.maximize(o);
+	require(r.status == ip::Status::Optimal && r.objective == 13 && r.pivots == 0 && r.nodes == 1,
+			"an unchanged root must reuse its basis without pivots");
+	s.add_le({1, 0}, 100);
+	require(s.maximize(o).objective == 13, "redundant constraint needs no pivots");
+	for (bool time : {false, true}) {
+		auto limit = o;
+		if (time) limit.time_limit = 0; else limit.node_limit = 0;
+		r = s.maximize(limit);
+		require(r.status == ip::Status::Limit && r.nodes == 0 && r.pivots == 0,
+				"a saved basis does not bypass a zero time/LP budget");
+	}
+	s.add_le({1, 0}, 2);
+	r = s.maximize(o);
+	require(r.status == ip::Status::Limit && !r.has_solution() && r.pivots == 0,
+			"a violated row respects the pivot budget and discards the old integer solution");
+	o.pivot_limit = 1000000;
+	require(s.maximize(o).objective == 8, "resume after an interrupted reoptimization");
+	o.initial_solution = {3, 2};
+	bool threw = false;
+	try { s.maximize(o); } catch (const std::invalid_argument&) { threw = true; }
+	require(threw, "a previously feasible initial solution must be revalidated");
+	o.initial_solution.clear();
+	auto copy = s;
+	copy.add_ge({1, 0}, 3);
+	require(copy.maximize(o).status == ip::Status::Infeasible && s.maximize(o).objective == 8,
+			"copied solvers must own independent saved bases");
+	require(s.minimize(o).objective == 3 && s.maximize(o).objective == 8,
+			"objective direction changes invalidate a saved basis");
+	checks += 12;
+
+	ip::Solver bounds({1}); bounds.bounds(0, -2, 3);
+	require(bounds.maximize(o).objective == 3, "bounds setup");
+	bounds.bounds(0, -4, 7);
+	require(bounds.maximize(o).objective == 7 && bounds.minimize(o).objective == -4,
+			"both bound tightening and relaxation invalidate saved bases");
+	ip::Solver integer({1}); integer.add_le({2}, 3);
+	require(integer.maximize(o).objective == 1, "lattice preprocessing setup");
+	integer.continuous(0);
+	require(integer.maximize(o).objective == 1.5, "continuous must discard integer-rounded rows");
+	for (bool eps : {false, true}) {
+		auto changed = o; changed.pivot_limit = 0;
+		if (eps) changed.eps *= 2; else changed.integer_eps *= 2;
+		require(integer.maximize(changed).status == ip::Status::Limit,
+				"tolerance changes must rebuild the root");
+		require(integer.maximize(o).objective == 1.5, "recover after a tolerance change");
+	}
+	ip::Solver unbounded({1});
+	require(unbounded.maximize(o).status == ip::Status::UnboundedRelaxation, "unbounded setup");
+	unbounded.add_le({1}, 2);
+	require(unbounded.maximize(o).objective == 2, "adding a row can bound an unbounded root");
+	ip::Solver empty({});
+	require(empty.maximize(o).objective == 0, "empty setup");
+	empty.add_eq({}, 0);
+	require(empty.maximize(o).objective == 0, "zero-dimensional redundant equality");
+	empty.add_ge({}, 1);
+	require(empty.maximize(o).status == ip::Status::Infeasible, "zero-dimensional infeasibility");
+	checks += 13;
+
+	// Reusing this basis loses a small reduced cost; the checked cold retry recovers it.
+	ip::Solver unstable({-5, 0, 6});
+	for (int j = 0; j < 3; ++j) { unstable.continuous(j); unstable.bounds(j, -2, 5); }
+	require(unstable.maximize(o).status == ip::Status::Optimal, "recovery setup");
+	unstable.add_le({-0.00030000000000000003, 30, -1}, 29.999700000000001);
+	require(unstable.maximize(o).status == ip::Status::Optimal, "recovery first row");
+	unstable.add_le({-2, -0.00005, 50}, 48.019950000000001);
+	o.initial_solution = {1, 1, 1};
+	auto recovered = unstable;
+	r = recovered.maximize(o);
+	require(r.status == ip::Status::Optimal && near(r.objective, 15.2824001759) && r.nodes == 2,
+			"a numerical failure during reuse must rebuild the root");
+	for (bool nodes : {false, true}) {
+		auto limit = o;
+		if (nodes) limit.node_limit = 1; else limit.pivot_limit = r.pivots - 1;
+		auto limited = unstable;
+		auto result = limited.maximize(limit);
+		require(result.status == ip::Status::Limit && result.has_solution() && result.objective == 1 &&
+				result.nodes <= limit.node_limit && result.pivots <= limit.pivot_limit && result.bound == ip::INF,
+				"a cold retry must preserve the incumbent and share every budget");
+		require(nodes ? result.nodes == limit.node_limit : result.pivots == limit.pivot_limit,
+				"a retry must not reset counters");
+	}
+	o.initial_solution.clear();
+	checks += 7;
+
+	std::mt19937 rng(20261005);
+	auto draw = [&](int lo, int hi) { return lo + int(rng() % unsigned(hi - lo + 1)); };
+	for (int tc = 0; tc < cases; ++tc) {
+		int n = draw(1, 4);
+		Problem p;
+		ip::Vec witness(n);
+		for (int j = 0; j < n; ++j) {
+			p.c.push_back(draw(-5, 5) / 2.0);
+			p.lo.push_back(draw(-4, -1) + 0.25);
+			p.hi.push_back(draw(1, 4) + 0.75);
+			p.integer.push_back(tc % 3 == 0 || (tc % 3 == 1 && j + 1 < n));
+			witness[j] = p.integer.back() ? 0 : 0.5;
+		}
+		auto warm = build(p);
+		bool minimize = tc % 2;
+		for (int step = 0; step < 6; ++step) {
+			o.cuts = step % 2 ? 8 : 0; o.strong_branching = step % 3 ? 0 : 3;
+			check(p, "incremental case=" + std::to_string(tc) + " step=" + std::to_string(step),
+				  o, minimize, &warm);
+			Row row{ip::Vec(n), Relation(draw(0, 2)), 0};
+			for (double& x : row.a) x = draw(-4, 4) / 2.0;
+			row.b = dot(row.a, witness);
+			if (row.relation == Relation::le) row.b += draw(0, 3) / 2.0;
+			if (row.relation == Relation::ge) row.b -= draw(0, 3) / 2.0;
+			if (step == 4 && tc % 4 == 0) row = {ip::Vec(n), Relation::le, -1};
+			p.rows.push_back(row);
+			if (row.relation == Relation::le) warm.add_le(row.a, row.b);
+			else if (row.relation == Relation::ge) warm.add_ge(row.a, row.b);
+			else warm.add_eq(row.a, row.b);
+		}
+	}
+}
+
 void validation_tests() {
 	auto invalid = [&](auto&& operation, const std::string& name) {
 		bool threw = false;
@@ -872,6 +1010,7 @@ int main(int argc, char** argv) {
 		randomized_tests(0x123456789abcdef0ULL, cases / 2, false, true);
 		randomized_lp_tests(0xfedcba9876543210ULL, cases / 2);
 		randomized_large_objective_tests(0x1020304050607080ULL, cases / 2);
+		reoptimization_tests(cases / 4 + 1);
 		validation_tests();
 		std::cout << "Passed " << checks << " solver checks\n";
 		return 0;
