@@ -21,7 +21,8 @@ parts = re.split(r'("(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\')', body)
 for i in range(0, len(parts), 2):
 	parts[i] = re.sub(r"\s*([{}();,])\s*", r"\1", parts[i])
 body = "".join(parts)
-destination = root / "single_include/ip_solver.hpp"
-destination.parent.mkdir(exist_ok=True)
-destination.write_text("\n".join(lines) + "\n" + body + "\n")
-print(f"{destination.relative_to(root)}: {destination.stat().st_size} bytes")
+compact = "\n".join(lines) + "\n" + body + "\n"
+for destination in (root / "include/ip_solver.min.hpp", root / "single_include/ip_solver.hpp"):
+	destination.parent.mkdir(exist_ok=True)
+	destination.write_text(compact)
+	print(f"{destination.relative_to(root)}: {destination.stat().st_size} bytes")

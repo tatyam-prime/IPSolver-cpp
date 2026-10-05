@@ -21,7 +21,7 @@ int main() {
 
 ## 使い方
 
-通常は `include/ip_solver.hpp` をインクルードします。提出ソースへ貼る場合は `python3 tools/compact.py` で短縮版 `single_include/ip_solver.hpp` を生成し、その内容を先頭に貼ってください。短縮版はコメントと空白だけを除去した同一実装です。
+`include/ip_solver.hpp`，あるいは短縮版 `include/ip_solver.min.hpp` をコピペしてください．
 
 ```sh
 c++ -std=c++17 -O2 -Iinclude examples/basic.cpp -o /tmp/ip_example
